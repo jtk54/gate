@@ -48,15 +48,20 @@ class ExternalAuthTokenFilter implements Filter {
   void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
     def httpServletRequest = (HttpServletRequest) request
     Authentication auth = extractor.extract(httpServletRequest)
+    println ",, auth: ${auth}"
     if (auth?.principal) {
       DefaultOAuth2AccessToken token = new DefaultOAuth2AccessToken(auth.principal.toString())
       // Reassign token type to be capitalized "Bearer",
       // see https://github.com/spinnaker/spinnaker/issues/2074
       token.tokenType = OAuth2AccessToken.BEARER_TYPE
 
+      println ",, token: ${token}"
       def ctx = userInfoRestTemplateFactory.getUserInfoRestTemplate().getOAuth2ClientContext()
       ctx.accessToken = token
+      println ",, context: ${ctx}"
     }
+    println ",, request: ${request}"
+    println ",, resp: ${response}"
     chain.doFilter(request, response)
   }
 

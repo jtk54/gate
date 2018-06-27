@@ -83,6 +83,7 @@ class OAuth2SsoConfig extends WebSecurityConfigurerAdapter {
 
   @Override
   void configure(HttpSecurity http) throws Exception {
+    println "" +
     authConfig.configure(http)
 
     http.exceptionHandling().authenticationEntryPoint(entryPoint)
