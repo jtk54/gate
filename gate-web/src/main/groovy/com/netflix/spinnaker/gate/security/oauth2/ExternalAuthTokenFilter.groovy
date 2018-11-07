@@ -23,14 +23,11 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken
 import org.springframework.security.oauth2.common.OAuth2AccessToken
 import org.springframework.security.oauth2.provider.authentication.BearerTokenExtractor
+import org.springframework.web.util.ContentCachingRequestWrapper
 
-import javax.servlet.Filter
-import javax.servlet.FilterChain
-import javax.servlet.FilterConfig
-import javax.servlet.ServletException
-import javax.servlet.ServletRequest
-import javax.servlet.ServletResponse
+import javax.servlet.*
 import javax.servlet.http.HttpServletRequest
+import java.util.stream.Collectors
 
 /**
  * This class supports the use case of an externally provided OAuth access token, for example, a
@@ -53,11 +50,19 @@ class ExternalAuthTokenFilter implements Filter {
       // Reassign token type to be capitalized "Bearer",
       // see https://github.com/spinnaker/spinnaker/issues/2074
       token.tokenType = OAuth2AccessToken.BEARER_TYPE
+      log.info(",, here is me token: ${token}")
+
+      HttpServletRequest derp = new ContentCachingRequestWrapper((HttpServletRequest) request)
+      def body = derp.getReader().lines().collect(Collectors.joining(System.lineSeparator()))
+      log.info(",, http request body: ${body}")
 
       def ctx = userInfoRestTemplateFactory.getUserInfoRestTemplate().getOAuth2ClientContext()
       ctx.accessToken = token
     }
+
+
     chain.doFilter(request, response)
+    log.info(",, we did the rest of the filter")
   }
 
   @Override

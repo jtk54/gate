@@ -73,6 +73,7 @@ class ProxyController(val objectMapper: ObjectMapper,
     var contentType = "text/plain"
     var responseBody: String
 
+    println("dafuq")
     try {
       val method = httpServletRequest.method
       val body = if (HttpMethod.permitsRequestBody(method)) {

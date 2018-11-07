@@ -60,6 +60,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
+import org.springframework.security.oauth2.client.filter.OAuth2ClientContextFilter
 import org.springframework.security.web.context.AbstractSecurityWebApplicationInitializer
 import org.springframework.session.data.redis.config.ConfigureRedisAction
 import org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration
@@ -321,6 +322,15 @@ class GateConfig extends RedisHttpSessionConfiguration {
     frb.order = Ordered.LOWEST_PRECEDENCE
     return frb
   }
+//
+//  @Bean
+//  FilterRegistrationBean oauth2ClientFilterRegistration(OAuth2ClientContextFilter filter) {
+//    println ",, derp filter: ${filter}"
+//    def frb = new FilterRegistrationBean(new OAuth2ClientContextFilter())
+//    frb.order = -100
+//    return frb
+//  }
+
 
   /**
    * This pulls the `springSecurityFilterChain` in front of the {@link AuthenticatedRequestFilter},
@@ -333,7 +343,7 @@ class GateConfig extends RedisHttpSessionConfiguration {
     def frb = new FilterRegistrationBean(securityFilter)
     frb.order = 0
     frb.name = AbstractSecurityWebApplicationInitializer.DEFAULT_FILTER_NAME
-    return frb;
+    return frb
   }
 
   @Bean

@@ -16,7 +16,6 @@
 
 package com.netflix.spinnaker.gate.security.oauth2
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.spinnaker.gate.security.AllowedAccountsSupport
 import com.netflix.spinnaker.gate.security.oauth2.provider.SpinnakerProviderTokenServices
 import com.netflix.spinnaker.gate.services.CredentialsService
@@ -40,7 +39,7 @@ import retrofit.RetrofitError
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-import static net.logstash.logback.argument.StructuredArguments.*
+import static net.logstash.logback.argument.StructuredArguments.entries
 
 /**
  * ResourceServerTokenServices is an interface used to manage access tokens. The UserInfoTokenService object is an
@@ -78,6 +77,7 @@ class SpinnakerUserInfoTokenServices implements ResourceServerTokenServices {
 
   @Override
   OAuth2Authentication loadAuthentication(String accessToken) throws AuthenticationException, InvalidTokenException {
+    log.info(",, running loadAuthentication(token) token: ${accessToken}")
     OAuth2Authentication oAuth2Authentication = userInfoTokenServices.loadAuthentication(accessToken)
 
     Map details = oAuth2Authentication.userAuthentication.details as Map
