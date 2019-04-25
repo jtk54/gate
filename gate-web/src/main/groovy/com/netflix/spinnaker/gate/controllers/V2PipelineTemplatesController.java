@@ -21,6 +21,7 @@ import static com.netflix.spinnaker.gate.controllers.PipelineTemplatesController
 import static com.netflix.spinnaker.gate.controllers.PipelineTemplatesController.getNameFromTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.netflix.spinnaker.gate.controllers.PipelineController.PipelineException;
 import com.netflix.spinnaker.gate.controllers.PipelineTemplatesController.PipelineTemplate;
 import com.netflix.spinnaker.gate.services.PipelineTemplateService.PipelineTemplateDependent;
 import com.netflix.spinnaker.gate.services.TaskService;
@@ -35,8 +36,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,6 +48,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 @RestController
 @RequestMapping(value = "/v2/pipelineTemplates")
@@ -75,8 +80,8 @@ public class V2PipelineTemplatesController {
 
   @ApiOperation(value = "(ALPHA) Plan a pipeline template configuration.", response = HashMap.class)
   @RequestMapping(value = "/plan", method = RequestMethod.POST)
-  public Map<String, Object> plan(@RequestBody Map<String, Object> pipeline) {
-    return v2PipelineTemplateService.plan(pipeline);
+  public ResponseEntity plan(@RequestBody Map<String, Object> pipeline) {
+    return maybePropagateTemplatedPipelineErrors(pipeline, v2PipelineTemplateService::plan);
   }
 
   @ApiOperation(value = "(ALPHA) Create a pipeline template.", response = HashMap.class)
@@ -210,6 +215,29 @@ public class V2PipelineTemplatesController {
 
     PipelineTemplateException(Map<String, Object> additionalAttributes) {
       this.additionalAttributes = additionalAttributes;
+    }
+  }
+
+  private ResponseEntity maybePropagateTemplatedPipelineErrors(Map requestBody,
+                                                               Function<Map, Map> function) {
+    try {
+      Map body = function.apply(requestBody);
+      return new ResponseEntity<>(body, HttpStatus.OK);
+    } catch (RetrofitError re) {
+      Response resp = re.getResponse();
+      if (resp == null) {
+        throw re;
+      }
+
+      int responseStatus = resp.getStatus();
+      String pipelineType = (String) requestBody.getOrDefault("type", "");
+      if (responseStatus == HttpStatus.BAD_REQUEST.value() &&
+        pipelineType.equals("templatedPipeline")) {
+          throw new PipelineTemplateException(
+            (HashMap<String, Object>) re.getBodyAs(HashMap.class));
+      } else {
+        throw re;
+      }
     }
   }
 }
